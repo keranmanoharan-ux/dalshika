@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dalshi 💖</title>
+
+<style>
+:root{
+  --pink1:#ffd1dc;
+  --pink2:#ff4d6d;
+  --pink3:#ff8fab;
+  --card:#ffffffee;
+  --shadow:0 20px 60px rgba(0,0,0,.18);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  font-family:system-ui,Arial,sans-serif;
+  background:
+    radial-gradient(900px 500px at 20% 20%, var(--pink1), transparent 60%),
+    radial-gradient(900px 600px at 80% 60%, var(--pink3), transparent 55%),
+    linear-gradient(135deg,#fff1f2,#ffe4e6);
+  overflow:hidden;
+}
+
+/* Hintergrundherzen */
+.bg span{
+  position:fixed;
+  bottom:-20px;
+  font-size:20px;
+  opacity:.25;
+  animation:float 12s linear infinite;
+}
+@keyframes float{
+  from{transform:translateY(0)}
+  to{transform:translateY(-120vh)}
+}
+
+.card{
+  background:var(--card);
+  padding:26px 20px 22px;
+  border-radius:28px;
+  box-shadow:var(--shadow);
+  width:min(520px,92vw);
+  text-align:center;
+  position:relative;
+}
+
+/* Herz */
+.heart{
+  width:80px;height:80px;
+  background:var(--pink2);
+  margin:14px auto 20px;
+  position:relative;
+  transform:rotate(-45deg);
+  animation:beat 1s infinite;
+}
+.heart::before,.heart::after{
+  content:"";
+  width:80px;height:80px;
+  background:var(--pink2);
+  border-radius:50%;
+  position:absolute;
+}
+.heart::before{top:-40px;left:0}
+.heart::after{left:40px;top:0}
+@keyframes beat{
+  0%,100%{transform:rotate(-45deg) scale(1)}
+  50%{transform:rotate(-45deg) scale(1.1)}
+}
+
+/* Spielfeld */
+.arena{
+  position:relative;
+  height:160px;
+  margin-top:10px;
+}
+
+/* Buttons */
+button{
+  border:none;
+  padding:14px 22px;
+  font-size:16px;
+  font-weight:900;
+  border-radius:16px;
+  cursor:pointer;
+  position:absolute;
+  top:50%;
+  transform:translate(-50%,-50%);
+}
+
+#yes{
+  left:30%;
+  background:#22c55e;
+  color:white;
+}
+#no{
+  left:70%;
+  background:#ef4444;
+  color:white;
+}
+
+/* Overlay */
+.overlay{
+  position:fixed;
+  inset:0;
+  display:none;
+  place-items:center;
+  background:rgba(0,0,0,.25);
+  backdrop-filter:blur(6px);
+  z-index:5;
+}
+.overlay.active{display:grid}
+
+.overlay .box{
+  background:white;
+  padding:30px;
+  border-radius:30px;
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+
+/* Feuerwerk */
+canvas{
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  display:none;
+  z-index:4;
+}
+canvas.active{display:block}
+</style>
+</head>
+
+<body>
+
+<div class="bg" id="bg"></div>
+
+<canvas id="fx"></canvas>
+
+<div class="card">
+  <h1>Dalshi 💖</h1>
+  <p style="font-size:18px;font-weight:700">
+    Willst du mein Valentinstag sein?
+  </p>
+
+  <div class="heart"></div>
+
+  <div class="arena" id="arena">
+    <button id="yes">Ja 😍</button>
+    <button id="no">Nein 🙈</button>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="box">
+    <h1>🎆 Vielen Dank Babylon 🎆</h1>
+    <p style="font-size:22px;font-weight:800">Love you 💗</p>
+    <p>Du bist mein Valentinstag 😍</p>
+  </div>
+</div>
+
+<script>
+// Hintergrundherzen
+const bg=document.getElementById("bg");
+["💗","💘","💖","💕"].forEach(e=>{
+  for(let i=0;i<6;i++){
+    let s=document.createElement("span");
+    s.textContent=e;
+    s.style.left=Math.random()*100+"vw";
+    s.style.animationDuration=8+Math.random()*8+"s";
+    bg.appendChild(s);
+  }
+});
+
+// Nein-Button flieht
+const arena=document.getElementById("arena");
+const no=document.getElementById("no");
+
+arena.addEventListener("pointermove",e=>{
+  const r=arena.getBoundingClientRect();
+  const x=Math.random()*(r.width-100)+50;
+  const y=Math.random()*(r.height-60)+30;
+  no.style.left=x+"px";
+  no.style.top=y+"px";
+});
+
+// Feuerwerk
+const yes=document.getElementById("yes");
+const fx=document.getElementById("fx");
+const ctx=fx.getContext("2d");
+const overlay=document.getElementById("overlay");
+let parts=[];
+
+function resize(){
+  fx.width=innerWidth;
+  fx.height=innerHeight;
+}
+resize();
+
+function boom(x,y){
+  for(let i=0;i<200;i++){
+    parts.push({
+      x,y,
+      vx:(Math.random()-0.5)*8,
+      vy:(Math.random()-0.5)*8,
+      life:80,
+      c:["#ff4d6d","#ff8fab","#ffd1dc","#22c55e"][Math.floor(Math.random()*4)]
+    });
+  }
+}
+
+function loop(){
+  ctx.clearRect(0,0,fx.width,fx.height);
+  parts.forEach(p=>{
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.life--;
+    ctx.fillStyle=p.c;
+    ctx.fillRect(p.x,p.y,4,4);
+  });
+  parts=parts.filter(p=>p.life>0);
+  requestAnimationFrame(loop);
+}
+
+yes.onclick=()=>{
+  fx.classList.add("active");
+  overlay.classList.add("active");
+  boom(innerWidth/2,innerHeight/2);
+  loop();
+};
+</script>
+
+</body>
+</html>
